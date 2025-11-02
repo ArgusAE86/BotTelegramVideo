@@ -1,15 +1,16 @@
+import os
 import logging
 import asyncio
 import yt_dlp
-import os
 from datetime import datetime
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import Message, FSInputFile, InlineKeyboardMarkup, InlineKeyboardButton
 
-TOKEN = "8568636450:AAFUC3sc_tbQJc5DwZO5Rxs6Ypo9qmGpThg"
+# --- Токен берём из переменных окружения ---
+TOKEN = os.getenv("TOKEN")
 
-# ---------- ЛОГИ ----------
+# --- Логирование ---
 os.makedirs("logs", exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
@@ -55,7 +56,7 @@ async def handle_link(message: Message):
     await message.answer("📥 Обрабатываю ссылку...")
 
     try:
-        # -------- Проверка длительности --------
+        # --- Проверка длительности ---
         check_opts = {"quiet": True, "skip_download": True}
         with yt_dlp.YoutubeDL(check_opts) as ydl:
             info = ydl.extract_info(url, download=False)
@@ -69,7 +70,7 @@ async def handle_link(message: Message):
             logging.warning(f"{user} отправил слишком длинное видео: {url}")
             return
 
-        # -------- YouTube: выбор разрешения --------
+        # --- YouTube: выбор разрешения ---
         if "youtube" in url:
             formats = []
             with yt_dlp.YoutubeDL({"quiet": True}) as ydl:
@@ -102,7 +103,7 @@ async def handle_link(message: Message):
             await message.answer("📹 Выбери качество видео:", reply_markup=kb)
             return
 
-        # -------- TikTok / Instagram --------
+        # --- TikTok / Instagram ---
         await download_and_send(message, url, user)
 
     except Exception as e:
@@ -146,9 +147,7 @@ async def choose_resolution(callback: types.CallbackQuery):
         logging.info(f"Видео {title} отправлено пользователю {user}.")
 
     except Exception as e:
-        await callback.message.answer(
-            "⚠️ Попробуй другую ссылку, ваше видео невозможно скачать 😔"
-        )
+        await callback.message.answer("⚠️ Попробуй другую ссылку, ваше видео невозможно скачать 😔")
         _log_error(user, url, e)
 
 # ---------- Универсальная функция скачивания ----------
